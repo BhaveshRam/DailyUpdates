@@ -1,6 +1,14 @@
-const { log } = require("console");
+var http = require('http')
+var fs = require('fs')
 
-log("First  task");
-setTimeout(() => log("First timeout task"), 2);
-setTimeout(() => log("Second timeout task"), 0);
-log("Second Task");
+http.createServer(
+    function(req, res) {
+        const fileStream = fs.createReadStream('./content/result.txt', 'utf8')
+        fileStream.on('open', ()=>{
+            fileStream.pipe(res)
+        })
+        fileStream.on("error", (err)=>{
+            res.end(err)
+        })
+    }
+).listen(3000)
