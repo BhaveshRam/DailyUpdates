@@ -1,5 +1,6 @@
 const {compareSync, hashSync} = require("bcryptjs")
 const {User} = require("../model/User.js")
+const jwt = require('jsonwebtoken')
 
 const getAllUser = async (req, res,next) =>{
     let users
@@ -13,6 +14,13 @@ const getAllUser = async (req, res,next) =>{
         return res.status(401).json({msg: "No Users found"})
     }
     return res.status(200).json({users:users})
+}
+
+const maxTime = 24 * 60 * 60
+const createToken = (id) =>{
+    return jwt.sign({ id }, 'Hello ram!!', {
+        expiresIn: maxTime
+    })
 }
 
 const login = async (req, res, next) =>{
@@ -31,7 +39,9 @@ const login = async (req, res, next) =>{
         let PasswordMatch = compareSync(password, existingUser.password)
         if (!PasswordMatch){
             return res.status(400).json({msg: "Password Mismatch"})
-        }   
+        }
+        const token = createToken(existingUser._id)   
+        res.cookie('jwt', token, { maxTime: maxTime})
         res.status(200).json({msg:"Login Successfull!"})    
     }catch(err){
         console.log(err)
@@ -52,14 +62,16 @@ const signUp = async (req, res, next) =>{
     if (existingUser){
         return res.status(400).json({msg: "User found by this email"})
     }
-    const user = new User({
+    const newUser = new User({
         name,
         email,
         password: hashSync(password),
         blogs:[]
     })
     try{
-        await user.save()
+        const user = await newUser.save()
+        const token = createToken(user._id)
+        res.cookie('jwt', token, {httpOnly: true, maxTime: maxTime * 10})
         return res.status(200).json({msg: "User creation successful!"})
     }catch(err){
         console.log(err)

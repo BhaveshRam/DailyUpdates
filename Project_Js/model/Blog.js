@@ -15,6 +15,10 @@ const newSchema = new Schema({
         type: mongoose.Types.ObjectId,
         ref:"User",
         required: true
+    },
+    banner: {
+        data: Buffer,
+        type: String
     }
 })
 
